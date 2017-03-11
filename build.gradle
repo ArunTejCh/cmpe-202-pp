@@ -25,5 +25,7 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
+    
+    compile 'com.github.javaparser:javaparser-core:3.0.1'
 }
 
