@@ -27,5 +27,9 @@ public class C2 {
     public void redraw( A1 a1 ) {
         // call a1 methods
     }
+    
+    public void optimize( A1 a1 ) {
+        // call a1 methods
+    }
 }
  
