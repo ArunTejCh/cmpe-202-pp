@@ -23,5 +23,9 @@ public class C2 {
     public void finalize( A1 a1 ) {
         // call a1 methods
     }
+    
+    public void redraw( A1 a1 ) {
+        // call a1 methods
+    }
 }
  
