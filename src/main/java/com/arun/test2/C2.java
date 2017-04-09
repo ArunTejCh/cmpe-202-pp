@@ -19,5 +19,9 @@ public class C2 {
     public void teardown( A1 a1 ) {
         // call a1 methods
     }
+    
+    public void finalize( A1 a1 ) {
+        // call a1 methods
+    }
 }
  
