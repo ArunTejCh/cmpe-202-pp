@@ -12,6 +12,10 @@ public class C2 {
         // call a1 methods
     }
     
+    public int setup (A1 a, int b){
+    	return 0;
+    }
+    
     public void teardown( A1 a1 ) {
         // call a1 methods
     }
