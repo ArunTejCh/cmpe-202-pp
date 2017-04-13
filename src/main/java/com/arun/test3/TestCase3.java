@@ -6,4 +6,6 @@ public class TestCase3 {
 
 	}
 
+	
+	public TestCase3(){}
 }
