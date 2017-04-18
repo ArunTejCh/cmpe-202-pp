@@ -14,11 +14,22 @@ public class ClassDetails {
 	private List<Method> methods;
 	
 	private List<Relation> relations;
+	
+	private List<Constructor> constructors;
 
 	public ClassDetails() {
 		attributes = new ArrayList<Attribute>();
 		methods = new ArrayList<Method>();
 		relations = new ArrayList<Relation>();
+		constructors = new ArrayList<Constructor>();
+	}
+
+	public List<Constructor> getConstructors() {
+		return constructors;
+	}
+
+	public void setConstructors(List<Constructor> constructors) {
+		this.constructors = constructors;
 	}
 
 	public ClassOrInterfaceDeclaration getClassDet() {
@@ -56,8 +67,7 @@ public class ClassDetails {
 	@Override
 	public String toString() {
 		return "ClassDetails [classDet=" + classDet + ", attributes=" + attributes + ", methods=" + methods
-				+ ", relations=" + relations + "]";
+				+ ", relations=" + relations + ", constructors=" + constructors + "]";
 	}
 
-	
 }

@@ -6,11 +6,15 @@ public class Relation {
 	
 	private String dest;
 	
-	private String type;
+	private RelationType type;
 	
 	private String sourceMultiplicity;
 	
 	private String destMultiplicity;
+	
+	public enum RelationType {
+		GENERALIZATION, COMPOSITION, ASSOCIATION, DEPENDENCY, AGGREGATION, REALIZATION
+	}
 
 	public String getSource() {
 		return source;
@@ -28,11 +32,11 @@ public class Relation {
 		this.dest = dest;
 	}
 
-	public String getType() {
+	public RelationType getType() {
 		return type;
 	}
 
-	public void setType(String type) {
+	public void setType(RelationType type) {
 		this.type = type;
 	}
 
@@ -57,7 +61,6 @@ public class Relation {
 		return "Relation [source=" + source + ", dest=" + dest + ", type=" + type + ", sourceMultiplicity="
 				+ sourceMultiplicity + ", destMultiplicity=" + destMultiplicity + "]";
 	}
-	
 	
 	
 	
