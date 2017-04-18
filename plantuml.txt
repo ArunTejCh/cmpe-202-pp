@@ -1,0 +1,11 @@
+@startuml
+skinparam classAttributeIconSize 0
+A : private int x
+A : private int y
+A : private Collection<B> b
+A : private C c
+A : private Collection<D> d
+B : private A a
+C : private A a
+D : private A a
+@enduml

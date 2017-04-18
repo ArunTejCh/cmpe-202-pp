@@ -27,5 +27,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     
     compile 'com.github.javaparser:javaparser-core:3.0.1'
+    
+    compile 'com.github.javaparser:java-symbol-solver-core:0.4.0'
 }
 
