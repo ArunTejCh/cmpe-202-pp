@@ -412,6 +412,33 @@ public class UMLParser {
 			classes.add(dets.getClassDet().getNameAsString());
 		}
 		
+		for(ClassDetails dets : parsedFiles){
+			if(dets.getClassDet().isInterface())
+				continue;
+			for(Attribute attr : dets.getAttributes()){
+				if(classes.contains(attr.getType().toString())){
+					List<Relation> rList = dets.getRelations();
+					boolean alreadyPresent = false;
+					Relation r = new Relation();
+					r.setSource(dets.getClassDet().getNameAsString());
+					r.setDest(attr.getType().toString());
+					r.setType(Relation.RelationType.ASSOCIATION);
+					
+					for(Relation rel : rList){
+						if(rel.equals(r))
+							alreadyPresent = true;
+					}
+					if(!alreadyPresent){
+						rList.add(r);
+					}
+				}
+				
+				
+			}
+			
+		}
+		
+		
 		
 
 	}
