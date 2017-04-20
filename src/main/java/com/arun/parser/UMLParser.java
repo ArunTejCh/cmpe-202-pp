@@ -215,14 +215,29 @@ public class UMLParser {
 						break;
 					case ASSOCIATION:
 						relation = "--";
+						boolean revPresentAs = false;
+						Relation duplicateAs = null;
+						for (ClassDetails dets : parsedFiles) {
+							if (dets.getClassDet().getNameAsString().equalsIgnoreCase(r.getDest())) {
+								for (Relation rev : dets.getRelations()) {
+									if (rev.getType() == RelationType.ASSOCIATION
+											&& rev.getDest().equalsIgnoreCase(r.getSource())) {
+										revPresentAs = true;
+										duplicateAs = rev;
+									}
+								}
+								dets.getRelations().remove(duplicateAs);
+							}
+						}
 						break;
 					case DEPENDENCY:
 						boolean revPresent = false;
 						Relation duplicate = null;
-						for(ClassDetails dets: parsedFiles){
-							if(dets.getClassDet().getNameAsString().equalsIgnoreCase(r.getDest())){
-								for(Relation rev : dets.getRelations()){
-									if(rev.getType() == RelationType.DEPENDENCY && rev.getDest().equalsIgnoreCase(r.getSource())){
+						for (ClassDetails dets : parsedFiles) {
+							if (dets.getClassDet().getNameAsString().equalsIgnoreCase(r.getDest())) {
+								for (Relation rev : dets.getRelations()) {
+									if (rev.getType() == RelationType.DEPENDENCY
+											&& rev.getDest().equalsIgnoreCase(r.getSource())) {
 										revPresent = true;
 										duplicate = rev;
 									}
@@ -230,12 +245,12 @@ public class UMLParser {
 								dets.getRelations().remove(duplicate);
 							}
 						}
-						if(!revPresent){
+						if (!revPresent) {
 							relation = "<..";
-						}else{
+						} else {
 							relation = "..";
 						}
-						
+
 						break;
 					default:
 						relation = "--";
@@ -326,53 +341,53 @@ public class UMLParser {
 
 	private void parseDependencies(List<ClassDetails> parsedFiles) {
 		List<String> classes = new ArrayList<String>();
-		
-		for(ClassDetails dets : parsedFiles){
+
+		for (ClassDetails dets : parsedFiles) {
 			classes.add(dets.getClassDet().getNameAsString());
 		}
-		
-		for(ClassDetails dets : parsedFiles){
-			if(dets.getClassDet().isInterface())
+
+		for (ClassDetails dets : parsedFiles) {
+			if (dets.getClassDet().isInterface())
 				continue;
-			for(Method m : dets.getMethods()){
-				for(Parameter p : m.getParams()){
-					if(classes.contains(p.getType().toString())){
+			for (Method m : dets.getMethods()) {
+				for (Parameter p : m.getParams()) {
+					if (classes.contains(p.getType().toString())) {
 						List<Relation> rList = dets.getRelations();
 						boolean alreadyPresent = false;
 						Relation r = new Relation();
 						r.setSource(dets.getClassDet().getNameAsString());
 						r.setDest(p.getType().toString());
 						r.setType(Relation.RelationType.DEPENDENCY);
-						
-						for(Relation rel : rList){
-							if(rel.equals(r))
+
+						for (Relation rel : rList) {
+							if (rel.equals(r))
 								alreadyPresent = true;
 						}
-						if(!alreadyPresent){
+						if (!alreadyPresent) {
 							rList.add(r);
 						}
 					}
 				}
-				
+
 				BlockStmt st = m.getBdy().get();
-				if(st != null){
+				if (st != null) {
 					List<Node> nList = st.getChildNodes();
-					for(Node n : nList){
+					for (Node n : nList) {
 						String code = n.toString();
-						for(String local : classes){
-							if(isContain(code, local) && !isContain(code, "new "+ local)){
+						for (String local : classes) {
+							if (isContain(code, local) && !isContain(code, "new " + local)) {
 								List<Relation> rList = dets.getRelations();
 								boolean alreadyPresent = false;
 								Relation r = new Relation();
 								r.setSource(dets.getClassDet().getNameAsString());
 								r.setDest(local);
 								r.setType(Relation.RelationType.DEPENDENCY);
-								
-								for(Relation rel : rList){
-									if(rel.equals(r))
+
+								for (Relation rel : rList) {
+									if (rel.equals(r))
 										alreadyPresent = true;
 								}
-								if(!alreadyPresent){
+								if (!alreadyPresent) {
 									rList.add(r);
 								}
 							}
@@ -380,22 +395,22 @@ public class UMLParser {
 					}
 				}
 			}
-		
-			for(Constructor c : dets.getConstructors()){
-				for(Parameter p : c.getParams()){
-					if(classes.contains(p.getType().toString())){
+
+			for (Constructor c : dets.getConstructors()) {
+				for (Parameter p : c.getParams()) {
+					if (classes.contains(p.getType().toString())) {
 						List<Relation> rList = dets.getRelations();
 						boolean alreadyPresent = false;
 						Relation r = new Relation();
 						r.setSource(dets.getClassDet().getNameAsString());
 						r.setDest(p.getType().toString());
 						r.setType(Relation.RelationType.DEPENDENCY);
-						
-						for(Relation rel : rList){
-							if(rel.equals(r))
+
+						for (Relation rel : rList) {
+							if (rel.equals(r))
 								alreadyPresent = true;
 						}
-						if(!alreadyPresent){
+						if (!alreadyPresent) {
 							rList.add(r);
 						}
 					}
@@ -407,46 +422,49 @@ public class UMLParser {
 	private void parseAssociations(List<ClassDetails> parsedFiles) {
 
 		List<String> classes = new ArrayList<String>();
-		
-		for(ClassDetails dets : parsedFiles){
+
+		for (ClassDetails dets : parsedFiles) {
 			classes.add(dets.getClassDet().getNameAsString());
 		}
-		
-		for(ClassDetails dets : parsedFiles){
-			if(dets.getClassDet().isInterface())
+
+		for (ClassDetails dets : parsedFiles) {
+			if (dets.getClassDet().isInterface())
 				continue;
-			for(Attribute attr : dets.getAttributes()){
-				if(classes.contains(attr.getType().toString())){
-					List<Relation> rList = dets.getRelations();
-					boolean alreadyPresent = false;
-					Relation r = new Relation();
-					r.setSource(dets.getClassDet().getNameAsString());
-					r.setDest(attr.getType().toString());
-					r.setType(Relation.RelationType.ASSOCIATION);
-					
-					for(Relation rel : rList){
-						if(rel.equals(r))
-							alreadyPresent = true;
+			List<Attribute> toBeRem = new ArrayList<Attribute>();
+			for (Attribute attr : dets.getAttributes()) {
+				for (String classCur : classes) {
+					if (attr.getType().toString().contains(classCur)) {
+						toBeRem.add(attr);
+						List<Relation> rList = dets.getRelations();
+						boolean alreadyPresent = false;
+						Relation r = new Relation();
+						r.setSource(dets.getClassDet().getNameAsString());
+						r.setDest(classCur);
+						r.setType(Relation.RelationType.ASSOCIATION);
+
+						for (Relation rel : rList) {
+							if (rel.equals(r))
+								alreadyPresent = true;
+						}
+						if (!alreadyPresent) {
+							rList.add(r);
+						}
 					}
-					if(!alreadyPresent){
-						rList.add(r);
-					}
+
 				}
-				
-				
 			}
-			
+			for (Attribute attr : toBeRem) {
+				dets.getAttributes().remove(attr);
+			}
+
 		}
-		
-		
-		
 
 	}
-	
-	 private static boolean isContain(String source, String subItem){
-         String pattern = "\\b"+subItem+"\\b";
-         Pattern p=Pattern.compile(pattern);
-         Matcher m=p.matcher(source);
-         return m.find();
-    }
+
+	private static boolean isContain(String source, String subItem) {
+		String pattern = "\\b" + subItem + "\\b";
+		Pattern p = Pattern.compile(pattern);
+		Matcher m = p.matcher(source);
+		return m.find();
+	}
 }

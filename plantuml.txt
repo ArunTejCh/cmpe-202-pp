@@ -1,31 +1,14 @@
 @startuml
 skinparam classAttributeIconSize 0
-Interface Component
-Component : + operation() : String
-Class ConcreteComponent
-Component <|.. ConcreteComponent
-ConcreteComponent : + operation() : String
-Class ConcreteDecoratorA
-Decorator <|-- ConcreteDecoratorA
-Component <.. ConcreteDecoratorA
-ConcreteDecoratorA : - addedState : String
-ConcreteDecoratorA : + ConcreteDecoratorA(c : Component)
-ConcreteDecoratorA : + operation() : String
-ConcreteDecoratorA : - addedBehavior(in : String) : String
-Class ConcreteDecoratorB
-Decorator <|-- ConcreteDecoratorB
-Component <.. ConcreteDecoratorB
-ConcreteDecoratorB : - addedState : String
-ConcreteDecoratorB : + ConcreteDecoratorB(c : Component)
-ConcreteDecoratorB : + operation() : String
-ConcreteDecoratorB : - addedBehavior(in : String) : String
-Class Decorator
-Component <|.. Decorator
-Component <.. Decorator
-Decorator : - component : Component
-Decorator : + Decorator(c : Component)
-Decorator : + operation() : String
-Class Tester
-Component <.. Tester
-Tester : + {static}main(args : String[]) : void
+Class A
+B -- A
+C -- A
+D -- A
+A : - x : int
+A : - y : int
+A : + {static}temp1 : int
+A : # temp2 : String
+Class B
+Class C
+Class D
 @enduml
