@@ -7,16 +7,21 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.arun.pojo.Attribute;
 import com.arun.pojo.ClassDetails;
 import com.arun.pojo.Constructor;
 import com.arun.pojo.Method;
 import com.arun.pojo.Relation;
+import com.arun.pojo.Relation.RelationType;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -25,6 +30,7 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
@@ -49,6 +55,8 @@ public class UMLParser {
 		}
 
 		List<ClassDetails> parsedFiles = p.parseDetails(javaFiles);
+		p.parseAssociations(parsedFiles);
+		p.parseDependencies(parsedFiles);
 		p.createPlantUMLInputFile(parsedFiles);
 
 		return;
@@ -84,7 +92,6 @@ public class UMLParser {
 
 	private List<ClassDetails> parseDetails(List<File> javaFiles) {
 
-
 		List<ClassDetails> retList = new ArrayList<ClassDetails>();
 
 		for (File sourceFile : javaFiles) {
@@ -100,24 +107,24 @@ public class UMLParser {
 						cur.setClassDet(classDec);
 						NodeList<ClassOrInterfaceType> interfaces = classDec.getImplementedTypes();
 						NodeList<ClassOrInterfaceType> parent = classDec.getExtendedTypes();
-						
-						for(ClassOrInterfaceType imp : interfaces){
+
+						for (ClassOrInterfaceType imp : interfaces) {
 							String nme = imp.getNameAsString();
 							Relation r = new Relation();
 							r.setSource(classDec.getNameAsString());
 							r.setDest(nme);
 							r.setType(Relation.RelationType.REALIZATION);
-							
+
 							cur.getRelations().add(r);
 						}
-						
-						for(ClassOrInterfaceType imp : parent){
+
+						for (ClassOrInterfaceType imp : parent) {
 							String nme = imp.getNameAsString();
 							Relation r = new Relation();
 							r.setSource(classDec.getNameAsString());
 							r.setDest(nme);
 							r.setType(Relation.RelationType.GENERALIZATION);
-							
+
 							cur.getRelations().add(r);
 						}
 					}
@@ -131,11 +138,13 @@ public class UMLParser {
 							Type ret = mem.getType();
 							NodeList<Parameter> params = mem.getParameters();
 							EnumSet<Modifier> mods = mem.getModifiers();
+							Optional<BlockStmt> bdy = mem.getBody();
 							Method met = new Method();
 							met.setModifiers(mods);
 							met.setName(name);
 							met.setParams(params);
 							met.setReturnType(ret);
+							met.setBdy(bdy);
 							cur.getMethods().add(met);
 
 						} else if (member instanceof FieldDeclaration) {
@@ -191,29 +200,51 @@ public class UMLParser {
 				} else {
 					writer.println("Class " + det.getClassDet().getNameAsString());
 				}
-				
-				//Print Relations
-				for(Relation r : det.getRelations()){
-					
+
+				// Print Relations
+				for (Relation r : det.getRelations()) {
+
 					String relation = null;
-					
-					switch(r.getType()){
+
+					switch (r.getType()) {
 					case GENERALIZATION:
 						relation = "<|--";
 						break;
 					case REALIZATION:
 						relation = "<|..";
 						break;
+					case ASSOCIATION:
+						relation = "--";
+						break;
+					case DEPENDENCY:
+						boolean revPresent = false;
+						Relation duplicate = null;
+						for(ClassDetails dets: parsedFiles){
+							if(dets.getClassDet().getNameAsString().equalsIgnoreCase(r.getDest())){
+								for(Relation rev : dets.getRelations()){
+									if(rev.getType() == RelationType.DEPENDENCY && rev.getDest().equalsIgnoreCase(r.getSource())){
+										revPresent = true;
+										duplicate = rev;
+									}
+								}
+								dets.getRelations().remove(duplicate);
+							}
+						}
+						if(!revPresent){
+							relation = "<..";
+						}else{
+							relation = "..";
+						}
+						
+						break;
 					default:
 						relation = "--";
 						break;
 					}
 					writer.println(r.getDest() + " " + relation + " " + r.getSource());
-					
+
 				}
-				
-				
-				
+
 				// Print the attributes
 				for (Attribute attr : det.getAttributes()) {
 
@@ -292,4 +323,103 @@ public class UMLParser {
 			temp.append("~ ");
 		}
 	}
+
+	private void parseDependencies(List<ClassDetails> parsedFiles) {
+		List<String> classes = new ArrayList<String>();
+		
+		for(ClassDetails dets : parsedFiles){
+			classes.add(dets.getClassDet().getNameAsString());
+		}
+		
+		for(ClassDetails dets : parsedFiles){
+			if(dets.getClassDet().isInterface())
+				continue;
+			for(Method m : dets.getMethods()){
+				for(Parameter p : m.getParams()){
+					if(classes.contains(p.getType().toString())){
+						List<Relation> rList = dets.getRelations();
+						boolean alreadyPresent = false;
+						Relation r = new Relation();
+						r.setSource(dets.getClassDet().getNameAsString());
+						r.setDest(p.getType().toString());
+						r.setType(Relation.RelationType.DEPENDENCY);
+						
+						for(Relation rel : rList){
+							if(rel.equals(r))
+								alreadyPresent = true;
+						}
+						if(!alreadyPresent){
+							rList.add(r);
+						}
+					}
+				}
+				
+				BlockStmt st = m.getBdy().get();
+				if(st != null){
+					List<Node> nList = st.getChildNodes();
+					for(Node n : nList){
+						String code = n.toString();
+						for(String local : classes){
+							if(isContain(code, local) && !isContain(code, "new "+ local)){
+								List<Relation> rList = dets.getRelations();
+								boolean alreadyPresent = false;
+								Relation r = new Relation();
+								r.setSource(dets.getClassDet().getNameAsString());
+								r.setDest(local);
+								r.setType(Relation.RelationType.DEPENDENCY);
+								
+								for(Relation rel : rList){
+									if(rel.equals(r))
+										alreadyPresent = true;
+								}
+								if(!alreadyPresent){
+									rList.add(r);
+								}
+							}
+						}
+					}
+				}
+			}
+		
+			for(Constructor c : dets.getConstructors()){
+				for(Parameter p : c.getParams()){
+					if(classes.contains(p.getType().toString())){
+						List<Relation> rList = dets.getRelations();
+						boolean alreadyPresent = false;
+						Relation r = new Relation();
+						r.setSource(dets.getClassDet().getNameAsString());
+						r.setDest(p.getType().toString());
+						r.setType(Relation.RelationType.DEPENDENCY);
+						
+						for(Relation rel : rList){
+							if(rel.equals(r))
+								alreadyPresent = true;
+						}
+						if(!alreadyPresent){
+							rList.add(r);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void parseAssociations(List<ClassDetails> parsedFiles) {
+
+		List<String> classes = new ArrayList<String>();
+		
+		for(ClassDetails dets : parsedFiles){
+			classes.add(dets.getClassDet().getNameAsString());
+		}
+		
+		
+
+	}
+	
+	 private static boolean isContain(String source, String subItem){
+         String pattern = "\\b"+subItem+"\\b";
+         Pattern p=Pattern.compile(pattern);
+         Matcher m=p.matcher(source);
+         return m.find();
+    }
 }

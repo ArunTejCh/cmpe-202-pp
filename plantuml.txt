@@ -1,37 +1,31 @@
 @startuml
 skinparam classAttributeIconSize 0
-Class ConcreteObserver
-Observer <|.. ConcreteObserver
-ConcreteObserver : # observerState : String
-ConcreteObserver : # subject : ConcreteSubject
-ConcreteObserver : + ConcreteObserver(theSubject : ConcreteSubject)
-ConcreteObserver : + update() : void
-ConcreteObserver : + showState() : void
-Class ConcreteSubject
-Subject <|.. ConcreteSubject
-ConcreteSubject : - subjectState : String
-ConcreteSubject : - observers : Collection<Observer>
-ConcreteSubject : + getState() : String
-ConcreteSubject : + setState(status : String) : void
-ConcreteSubject : + attach(obj : Observer) : void
-ConcreteSubject : + detach(obj : Observer) : void
-ConcreteSubject : + notifyObservers() : void
-ConcreteSubject : + showState() : void
-Interface Observer
-Observer : + update() : void
-Class Optimist
-ConcreteObserver <|-- Optimist
-Optimist : + Optimist(sub : ConcreteSubject)
-Optimist : + update() : void
-Class Pessimist
-ConcreteObserver <|-- Pessimist
-Pessimist : + Pessimist(sub : ConcreteSubject)
-Pessimist : + update() : void
-Interface Subject
-Subject : + attach(obj : Observer) : void
-Subject : + detach(obj : Observer) : void
-Subject : + notifyObservers() : void
-Class TheEconomy
-ConcreteSubject <|-- TheEconomy
-TheEconomy : + TheEconomy()
+Interface Component
+Component : + operation() : String
+Class ConcreteComponent
+Component <|.. ConcreteComponent
+ConcreteComponent : + operation() : String
+Class ConcreteDecoratorA
+Decorator <|-- ConcreteDecoratorA
+Component <.. ConcreteDecoratorA
+ConcreteDecoratorA : - addedState : String
+ConcreteDecoratorA : + ConcreteDecoratorA(c : Component)
+ConcreteDecoratorA : + operation() : String
+ConcreteDecoratorA : - addedBehavior(in : String) : String
+Class ConcreteDecoratorB
+Decorator <|-- ConcreteDecoratorB
+Component <.. ConcreteDecoratorB
+ConcreteDecoratorB : - addedState : String
+ConcreteDecoratorB : + ConcreteDecoratorB(c : Component)
+ConcreteDecoratorB : + operation() : String
+ConcreteDecoratorB : - addedBehavior(in : String) : String
+Class Decorator
+Component <|.. Decorator
+Component <.. Decorator
+Decorator : - component : Component
+Decorator : + Decorator(c : Component)
+Decorator : + operation() : String
+Class Tester
+Component <.. Tester
+Tester : + {static}main(args : String[]) : void
 @enduml

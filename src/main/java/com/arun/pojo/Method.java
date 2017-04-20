@@ -1,10 +1,12 @@
 package com.arun.pojo;
 
 import java.util.EnumSet;
+import java.util.Optional;
 
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.Type;
 
 public class Method {
@@ -17,7 +19,16 @@ public class Method {
 
 	private NodeList<Parameter> params;
 	
+	private Optional<BlockStmt> bdy;
 	
+	public Optional<BlockStmt> getBdy() {
+		return bdy;
+	}
+
+	public void setBdy(Optional<BlockStmt> bdy) {
+		this.bdy = bdy;
+	}
+
 	public NodeList<Parameter> getParams() {
 		return params;
 	}
@@ -53,7 +64,7 @@ public class Method {
 	@Override
 	public String toString() {
 		return "Method [name=" + name + ", returnType=" + returnType + ", modifiers=" + modifiers + ", params=" + params
-				+ "]";
+				+ ", bdy=" + bdy + "]";
 	}
 
 }
