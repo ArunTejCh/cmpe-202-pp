@@ -1,9 +1,9 @@
 @startuml
 skinparam classAttributeIconSize 0
 Class A
-B -- A
+B "*" -- A
 C -- A
-D -- A
+D "*" -- A
 A : - x : int
 A : - y : int
 A : + {static}temp1 : int

@@ -216,6 +216,7 @@ public class UMLParser {
 					case ASSOCIATION:
 						relation = "--";
 						boolean revPresentAs = false;
+						String sourceMulti = null;
 						Relation duplicateAs = null;
 						for (ClassDetails dets : parsedFiles) {
 							if (dets.getClassDet().getNameAsString().equalsIgnoreCase(r.getDest())) {
@@ -223,12 +224,19 @@ public class UMLParser {
 									if (rev.getType() == RelationType.ASSOCIATION
 											&& rev.getDest().equalsIgnoreCase(r.getSource())) {
 										revPresentAs = true;
+										sourceMulti = rev.getDestMultiplicity();
 										duplicateAs = rev;
 									}
 								}
 								dets.getRelations().remove(duplicateAs);
 							}
 						}
+						
+						if(r.getDestMultiplicity() != null && !r.getDestMultiplicity().equalsIgnoreCase(""))
+							relation = "\"*\" " + relation;
+						
+						if(sourceMulti != null && !sourceMulti.equalsIgnoreCase(""))
+							relation =  relation + " \"*\"";
 						break;
 					case DEPENDENCY:
 						boolean revPresent = false;
@@ -433,13 +441,21 @@ public class UMLParser {
 			List<Attribute> toBeRem = new ArrayList<Attribute>();
 			for (Attribute attr : dets.getAttributes()) {
 				for (String classCur : classes) {
-					if (attr.getType().toString().contains(classCur)) {
+					List<Node> nList = attr.getType().getChildNodes();
+					List<String> nStrings = new ArrayList<String>();
+					for(Node n : nList){
+						nStrings.add(n.toString());
+					}
+					if (classCur.equalsIgnoreCase(attr.getType().toString()) || nStrings.contains(classCur)) {
 						toBeRem.add(attr);
 						List<Relation> rList = dets.getRelations();
 						boolean alreadyPresent = false;
 						Relation r = new Relation();
 						r.setSource(dets.getClassDet().getNameAsString());
 						r.setDest(classCur);
+						if(attr.getType().toString().contains("Collection")){
+							r.setDestMultiplicity("*");
+						}
 						r.setType(Relation.RelationType.ASSOCIATION);
 
 						for (Relation rel : rList) {
