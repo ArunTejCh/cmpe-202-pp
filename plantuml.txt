@@ -1,14 +1,12 @@
 @startuml
 skinparam classAttributeIconSize 0
-Class A
-B "*" -- A
-C -- A
-D "*" -- A
-A : - x : int
-A : - y : int
-A : + {static}temp1 : int
-A : # temp2 : String
-Class B
-Class C
-Class D
+Class ClassA
+ClassA : - message : String
+ClassA : - bark : String
+ClassA : + testMethod() : void
+Class ClassB
+ClassA <|-- ClassB
+ClassB : - hello : String
+ClassB : - getA() : String
+ClassB : - setA(a : String) : void
 @enduml

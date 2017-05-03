@@ -231,12 +231,12 @@ public class UMLParser {
 								dets.getRelations().remove(duplicateAs);
 							}
 						}
-						
-						if(r.getDestMultiplicity() != null && !r.getDestMultiplicity().equalsIgnoreCase(""))
+
+						if (r.getDestMultiplicity() != null && !r.getDestMultiplicity().equalsIgnoreCase(""))
 							relation = "\"*\" " + relation;
-						
-						if(sourceMulti != null && !sourceMulti.equalsIgnoreCase(""))
-							relation =  relation + " \"*\"";
+
+						if (sourceMulti != null && !sourceMulti.equalsIgnoreCase(""))
+							relation = relation + " \"*\"";
 						break;
 					case DEPENDENCY:
 						boolean revPresent = false;
@@ -274,10 +274,12 @@ public class UMLParser {
 					StringBuilder temp = new StringBuilder();
 					temp.append(classPreface);
 					EnumSet<Modifier> mods = attr.getModifiers();
-					this.printModifier(temp, mods);
-					temp.append(attr.getName().toString() + " : ");
-					temp.append(attr.getType());
-					writer.println(temp.toString());
+					boolean ret = this.printModifier(temp, mods);
+					if (ret) {
+						temp.append(attr.getName().toString() + " : ");
+						temp.append(attr.getType());
+						writer.println(temp.toString());
+					}
 				}
 
 				// Print the constructors
@@ -297,19 +299,28 @@ public class UMLParser {
 
 				// Print the methods
 				for (Method met : det.getMethods()) {
-
-					StringBuilder temp = new StringBuilder();
-					temp.append(classPreface);
-					EnumSet<Modifier> mods = met.getModifiers();
-					this.printModifier(temp, mods);
-					temp.append(met.getName().toString() + "(");
-
-					for (Parameter param : met.getParams()) {
-						temp.append(param.getNameAsString() + " : " + param.getType().toString());
+					boolean isGetterOrSetter = false;
+					for (Attribute attr : det.getAttributes()) {
+						if (met.getName().toString().equalsIgnoreCase("get" + attr.getName().toString())
+								|| met.getName().toString().equalsIgnoreCase("set" + attr.getName().toString())) {
+							isGetterOrSetter = true;
+						}
 					}
+					
+					if(!isGetterOrSetter){
+						StringBuilder temp = new StringBuilder();
+						temp.append(classPreface);
+						EnumSet<Modifier> mods = met.getModifiers();
+						this.printModifier(temp, mods);
+						temp.append(met.getName().toString() + "(");
 
-					temp.append(") : " + met.getReturnType());
-					writer.println(temp.toString());
+						for (Parameter param : met.getParams()) {
+							temp.append(param.getNameAsString() + " : " + param.getType().toString());
+						}
+
+						temp.append(") : " + met.getReturnType());
+						writer.println(temp.toString());
+					}
 				}
 
 			}
@@ -323,7 +334,7 @@ public class UMLParser {
 		return null;
 	}
 
-	private void printModifier(StringBuilder temp, EnumSet<Modifier> mods) {
+	private boolean printModifier(StringBuilder temp, EnumSet<Modifier> mods) {
 
 		for (Modifier mod : mods) {
 			switch (mod) {
@@ -334,8 +345,7 @@ public class UMLParser {
 				temp.append("+ ");
 				break;
 			case PROTECTED:
-				temp.append("# ");
-				break;
+				return false;
 			case STATIC:
 				temp.append("{static}");
 				break;
@@ -343,15 +353,19 @@ public class UMLParser {
 		}
 
 		if (Modifier.getAccessSpecifier(mods) == AccessSpecifier.DEFAULT) {
-			temp.append("~ ");
+			return false;
 		}
+
+		return true;
 	}
 
 	private void parseDependencies(List<ClassDetails> parsedFiles) {
 		List<String> classes = new ArrayList<String>();
+		List<ClassOrInterfaceDeclaration> classDetails = new ArrayList<ClassOrInterfaceDeclaration>();
 
 		for (ClassDetails dets : parsedFiles) {
 			classes.add(dets.getClassDet().getNameAsString());
+			classDetails.add(dets.getClassDet());
 		}
 
 		for (ClassDetails dets : parsedFiles) {
@@ -372,7 +386,12 @@ public class UMLParser {
 								alreadyPresent = true;
 						}
 						if (!alreadyPresent) {
-							rList.add(r);
+							for (ClassOrInterfaceDeclaration dec : classDetails) {
+								if (p.getType().toString().equalsIgnoreCase(dec.getNameAsString())
+										&& dec.isInterface()) {
+									rList.add(r);
+								}
+							}
 						}
 					}
 				}
@@ -383,7 +402,8 @@ public class UMLParser {
 					for (Node n : nList) {
 						String code = n.toString();
 						for (String local : classes) {
-							if (isContain(code, local) && !isContain(code, "new " + local)) {
+							if (isContain(code, local) && !isContain(code, "new " + local)
+									&& !code.contains(local + ":")) {
 								List<Relation> rList = dets.getRelations();
 								boolean alreadyPresent = false;
 								Relation r = new Relation();
@@ -419,7 +439,12 @@ public class UMLParser {
 								alreadyPresent = true;
 						}
 						if (!alreadyPresent) {
-							rList.add(r);
+							for (ClassOrInterfaceDeclaration dec : classDetails) {
+								if (p.getType().toString().equalsIgnoreCase(dec.getNameAsString())
+										&& dec.isInterface()) {
+									rList.add(r);
+								}
+							}
 						}
 					}
 				}
@@ -443,7 +468,7 @@ public class UMLParser {
 				for (String classCur : classes) {
 					List<Node> nList = attr.getType().getChildNodes();
 					List<String> nStrings = new ArrayList<String>();
-					for(Node n : nList){
+					for (Node n : nList) {
 						nStrings.add(n.toString());
 					}
 					if (classCur.equalsIgnoreCase(attr.getType().toString()) || nStrings.contains(classCur)) {
@@ -453,7 +478,7 @@ public class UMLParser {
 						Relation r = new Relation();
 						r.setSource(dets.getClassDet().getNameAsString());
 						r.setDest(classCur);
-						if(attr.getType().toString().contains("Collection")){
+						if (attr.getType().toString().contains("Collection")) {
 							r.setDestMultiplicity("*");
 						}
 						r.setType(Relation.RelationType.ASSOCIATION);
